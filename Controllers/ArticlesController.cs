@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,41 @@ namespace Wyklad10Test.Controllers
 
             return View(article);
         }
+
+        public async Task<IActionResult> AddToCart(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var article = await _context.Article
+                .Include(a => a.Category)
+                .FirstOrDefaultAsync(m => m.ArticleId == id);
+            if (article == null)
+            {
+                return NotFound();
+            }
+
+            string cookieKey = $"{id}";
+            int currentCount = 0;
+
+            if (Request.Cookies[cookieKey] != null)
+            {
+                if (int.TryParse(Request.Cookies[cookieKey], out currentCount))
+                {
+                    currentCount++;
+                }
+            }
+            else
+            {
+                currentCount = 1;
+            }
+
+            SetCookie(cookieKey, currentCount.ToString(), 604800);
+            return RedirectToAction(nameof(Index));
+        }
+
 
         // GET: Articles/Create
         public IActionResult Create()
@@ -201,5 +237,14 @@ namespace Wyklad10Test.Controllers
         {
             return _context.Article.Any(e => e.ArticleId == id);
         }
+
+        public void SetCookie(string key, string value, int? numberOfSeconds = null)
+        {
+            CookieOptions option = new CookieOptions();
+            if (numberOfSeconds.HasValue)
+                option.Expires = DateTime.Now.AddSeconds(numberOfSeconds.Value);
+            Response.Cookies.Append(key, value, option);
+        }
+
     }
 }
