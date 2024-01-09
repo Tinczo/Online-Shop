@@ -54,11 +54,76 @@ namespace Wyklad10Test.Controllers
             return View(article);
         }
 
+        public async Task<IActionResult> Cart()
+        {
+            var cartItems = new List<CartItemViewModel>();
+            decimal total = 0m;
+
+            foreach (var cookie in Request.Cookies)
+            {
+                if (int.TryParse(cookie.Key, out int articleId) && int.TryParse(cookie.Value, out int quantity))
+                {
+                    var article = await _context.Article
+                        .Include(a => a.Category)
+                        .FirstOrDefaultAsync(a => a.ArticleId == articleId);
+                    if (article != null && quantity > 0)
+                    {
+                        cartItems.Add(new CartItemViewModel
+                        {
+                            Article = article,
+                            Quantity = quantity
+                        });
+                        total += article.Price * quantity;
+                    }
+                }
+            }
+
+            ViewBag.Total = total;
+
+            var sortedCartItems = cartItems.OrderBy(c => c.Article.ArticleId).ToList();
+
+            return View(sortedCartItems);
+        }
+
+        public async Task<IActionResult> Summary()
+        {
+            var cartItems = new List<CartItemViewModel>();
+            decimal total = 0m;
+
+            foreach (var cookie in Request.Cookies)
+            {
+                if (int.TryParse(cookie.Key, out int articleId) && int.TryParse(cookie.Value, out int quantity))
+                {
+                    var article = await _context.Article
+                        .Include(a => a.Category)
+                        .FirstOrDefaultAsync(a => a.ArticleId == articleId);
+                    if (article != null && quantity > 0)
+                    {
+                        cartItems.Add(new CartItemViewModel
+                        {
+                            Article = article,
+                            Quantity = quantity
+                        });
+                        total += article.Price * quantity;
+                    }
+                }
+            }
+
+            ViewBag.Total = total;
+
+            var sortedCartItems = cartItems.OrderBy(c => c.Article.ArticleId).ToList();
+
+            return View(sortedCartItems);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                //return NotFound();
+                return View("ArticleDeleted");
             }
 
             var article = await _context.Article
@@ -66,7 +131,8 @@ namespace Wyklad10Test.Controllers
                 .FirstOrDefaultAsync(m => m.ArticleId == id);
             if (article == null)
             {
-                return NotFound();
+                //return NotFound();
+                return View("ArticleDeleted");
             }
 
             string cookieKey = $"{id}";
@@ -84,7 +150,7 @@ namespace Wyklad10Test.Controllers
                 currentCount = 1;
             }
 
-            SetCookie(cookieKey, currentCount.ToString(), 604800);
+            SetCookie(cookieKey, currentCount.ToString());
             return RedirectToAction(nameof(Index));
         }
 
@@ -238,7 +304,48 @@ namespace Wyklad10Test.Controllers
             return _context.Article.Any(e => e.ArticleId == id);
         }
 
-        public void SetCookie(string key, string value, int? numberOfSeconds = null)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult IncrementCartItem(int articleId)
+        {
+            var quantity = GetCookieValue(articleId.ToString()) ?? 0;
+            if (quantity > 0)
+                SetCookie(articleId.ToString(), (quantity + 1).ToString());
+            return RedirectToAction("Cart");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DecrementCartItem(int articleId)
+        {
+            var quantity = GetCookieValue(articleId.ToString()) ?? 0;
+            if (quantity > 0)
+                SetCookie(articleId.ToString(), (quantity - 1).ToString());
+            return RedirectToAction("Cart");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RemoveCartItem(int articleId)
+        {
+            SetCookie(articleId.ToString(), "0"); 
+            return RedirectToAction("Cart");
+        }
+
+        private int? GetCookieValue(string key)
+        {
+            if (Request.Cookies.TryGetValue(key, out string value))
+            {
+                if (int.TryParse(value, out int intValue))
+                {
+                    return intValue;
+                }
+            }
+            return null;
+        }
+
+
+        public void SetCookie(string key, string value, int? numberOfSeconds = 604800)
         {
             CookieOptions option = new CookieOptions();
             if (numberOfSeconds.HasValue)

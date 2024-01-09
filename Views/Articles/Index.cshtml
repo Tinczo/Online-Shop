@@ -49,12 +49,18 @@
                         <img src="~/image/default.png" width="100" height="100" alt="defaultImage" />
                     }
                 </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ArticleId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ArticleId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ArticleId">Delete</a> |
-                <a asp-action="AddToCart" asp-route-id="@item.ArticleId">Add to cart</a>
-            </td>
+                <td>
+                    <div style="display: flex; align-items: center;">
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@item.ArticleId">Edit</a> |
+                            <a asp-action="Details" asp-route-id="@item.ArticleId">Details</a> |
+                            <a asp-action="Delete" asp-route-id="@item.ArticleId">Delete</a>
+                        </div>
+                        <form asp-action="AddToCart" asp-route-id="@item.ArticleId" method="post" style="margin-left: 10px;">
+                            <input type="image" src="~/image/cart.png" width="50" height="50" alt="Add to cart" />
+                        </form>
+                    </div>
+                </td>
         </tr>
 }
     </tbody>

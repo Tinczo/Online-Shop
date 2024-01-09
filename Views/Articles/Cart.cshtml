@@ -1,0 +1,78 @@
+﻿@model IEnumerable<Wyklad10Test.Models.CartItemViewModel>
+
+@{
+    ViewData["Title"] = "Your Cart";
+}
+
+<h1>Your Cart</h1>
+@if (!Model.Any())
+{
+    <p>There are no items in your cart.</p>
+}
+else
+{
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Category</th>
+            <th>Photo</th>
+            <th>Quantity</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Article.ArticleName</td>
+                <td>@item.Article.Price</td>
+                <td>@item.Article.Category.CategoryName</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.Article.ImagePath))
+                    {
+                        <img src="~/@Url.Content(item.Article.ImagePath)" width="100" height="100" alt="Image" />
+                    }
+                    else
+                    {
+                        <img src="~/image/default.png" width="100" height="100" alt="defaultImage" />
+                    }
+                </td>
+                <td>@item.Quantity</td>
+                <td>
+                    <form asp-action="IncrementCartItem" method="post">
+                        <input type="hidden" name="articleId" value="@item.Article.ArticleId" />
+                        <input type="image" src="~/image/plus.png" width="50" height="50" alt="Increment" />
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="DecrementCartItem" method="post">
+                        <input type="hidden" name="articleId" value="@item.Article.ArticleId" />
+                        <input type="image" src="~/image/minus.png" width="50" height="50 alt=" Decrement" />
+                    </form>
+                </td>
+                <td>
+                    <form asp-action="RemoveCartItem" method="post">
+                        <input type="hidden" name="articleId" value="@item.Article.ArticleId" />
+                        <input type="image" src="~/image/bin.png" width="50" height="50 alt=" Remove" />
+                    </form>
+                </td>
+            </tr>
+
+        }
+
+    </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6" style="text-align: right;"><strong>Total:</strong></td>
+                <td><strong>@ViewBag.Total</strong></td>
+                <td>
+                    <a asp-action="Summary" >Summary</a>
+                </td>
+            </tr>
+        </tfoot>
+</table>
+}
